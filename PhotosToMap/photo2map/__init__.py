@@ -95,9 +95,3 @@ def photos_to_map(folder, out_location, app_name='my_photos'):
 
             f.write(''.join([part1, points_json, part2, latlong, part3]))
         webbrowser.open(html)
-
-if __name__ == '__main__':
-
-    folder = r'C:\Users\calebma\Desktop\google_maps\images'
-    out = r'C:\Users\calebma\Desktop'
-    photos_to_map(folder, out, 'google_test')
