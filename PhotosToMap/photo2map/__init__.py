@@ -1,4 +1,4 @@
-from template import *
+from template import template, oms
 import gpsimage
 import mimetypes
 import json
@@ -24,27 +24,40 @@ def get_direction(d):
     else:
         return 'East'
 
-def photos_to_map(folder, out_location, app_name='my_photos'):
+def photos_to_map(folder, out_location='', app_name='my_photos', portable=True):
     """generates a simple google map web page showing geotagged photos
 
     Required:
         folder -- folder containing geotagged photos
-        out_location -- location where to store the web app
+        out_location -- location where to store the web app (only used when portable is True)
 
     Optional:
         app_name -- name of web app (will be folder name inside out_location)
+        portable -- option to create a portable app, if false, the html web page
+            will be stored in the same location as the photos.  When True, this will
+            create a new folder inside of the out_location with an index.htm page
+            and a copy of all the photos for the app to linked with relative paths.
     """
+    OMS_COMPILED_NAME = 'oms.min.js'
 
     # validate name
     bad = string.punctuation.replace('_',' ')
     for b in bad:
         app_name = app_name.replace(b, '_')
 
-    new_folder = os.path.join(out_location, app_name)
-    im_folder = os.path.join(new_folder, 'images')
-    for fold in [new_folder, im_folder]:
-        if not os.path.exists(fold):
-            os.makedirs(fold)
+    if portable:
+        new_folder = os.path.join(out_location, app_name)
+        im_folder = os.path.join(new_folder, 'images')
+        bin_folder = os.path.join(new_folder, 'bin')
+        html = os.path.join(new_folder, 'index.htm')
+        for fold in [new_folder, im_folder, bin_folder]:
+            if not os.path.exists(fold):
+                os.makedirs(fold)
+    else:
+        html = os.path.join(folder, app_name + '.htm')
+        bin_folder = os.path.join(folder, 'bin')
+        if not os.path.exists(bin_folder):
+            os.makedirs(bin_folder)
 
     points = []
     x_coords = []
@@ -57,6 +70,13 @@ def photos_to_map(folder, out_location, app_name='my_photos'):
             if im_type == 'image':
 
                 im = gpsimage.open(full_path)
+
+                if portable:
+                    shutil.copy(full_path, os.path.join(im_folder, fl))
+                    web_path = 'images/{}'.format(fl)
+                else:
+                    web_path = fl
+
                 lon = im.geometry['coordinates'][0]
                 lat = im.geometry['coordinates'][1]
                 x_coords.append(lon)
@@ -65,7 +85,7 @@ def photos_to_map(folder, out_location, app_name='my_photos'):
                 nice_time = '/'.join(map(str, [mo, day, year])) + ' ' + im.timestamp.split()[1]
                 direction = get_direction(im.direction)
                 style = 'width:{}px;height:{}px;'.format(*map(lambda x: x/10, im.size))
-                img_tag = '<img src="images/{}" style="{}"></img>'.format(fl, style)
+                img_tag = '<img src="{}" style="{}"></img>'.format(web_path, style)
                 label = '<span>{}</span>'.format('<br/>'.join(['<h3>Photo Name: {}</h3>'.format(fl),
                                                         'Date: {}'.format(nice_time),
                                                         'Latitude: {}'.format(round(lat, 3)),
@@ -81,17 +101,25 @@ def photos_to_map(folder, out_location, app_name='my_photos'):
                                'img_title': fl,
                                'content' : content})
 
-                shutil.copy(full_path, os.path.join(im_folder, fl))
-
         except:
             pass
 
     if points:
-        points_json = json.dumps(points, indent=4, sort_keys=True)
-        html = os.path.join(new_folder, 'index.htm')
-        with open(html, 'w') as f:
-            latlong = ', '.join(map(str, [sum(x_coords) / float(len(x_coords)),
-                                         sum(y_coords) / float(len(y_coords))]))
+        oms_file = os.path.join(bin_folder, OMS_COMPILED_NAME)
+        points_file = os.path.join(bin_folder, 'points.js')
 
-            f.write(''.join([part1, points_json, part2, latlong, part3]))
-        webbrowser.open(html)
+        with open(points_file, 'w') as f:
+            f.write('points = ' + json.dumps(points, indent=2))
+
+        with open(html, 'w') as f:
+            f.write(template)
+
+        with open(oms_file, 'w') as f:
+            f.write(oms)
+
+        # look for chrome path first
+        try:
+            CHROME = glob.glob(r'C:\Program Files*\Google\Chrome\Application\chrome.exe')[0]
+            webbrowser.get(CHROME.replace(os.sep, '/') + ' %s').open(html)
+        except IndexError:
+            webbrowser.open(html)

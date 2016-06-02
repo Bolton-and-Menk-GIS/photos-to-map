@@ -2,6 +2,7 @@
 __pycache__/
 *.py[co]
 *$py.class
+Progress.py
 
 # C extensions
 *.so
