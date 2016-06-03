@@ -75,29 +75,37 @@ class GUI(Frame):
     def onPhotoFolderOpen(self):
         fl = askdirectory(initialdir=os.path.join(os.path.expanduser('~'), 'Desktop'))
         self.folder.set(os.path.abspath(fl))
-        self.inFolderDisplay.config(state='normal')
+        self.inFolderDisplay.config(state=NORMAL)
         if self.app_option == self.options[0]:
-            if all(map(lambda x: bool(x), [self.folder.get(), self.new_folder.get(), self.name.get()])):
-                self.executeButton.config(state='normal')
-        else:
-            self.executeButton.config(state='normal')
+            if all(map(os.path.exists, [self.folder.get(), self.new_folder.get()]) + [bool(self.name.get())]):
+                self.executeButton.config(state=NORMAL)
+        else:# self.app_option == self.options[1] and os.path.exists(self.folder.get()):
+            self.executeButton.config(state=DISABLED)
 
     def onNewFolderOpen(self):
         fl = askdirectory(initialdir=os.path.join(os.path.expanduser('~'), 'Desktop'))
         self.new_folder.set(os.path.abspath(fl))
-        self.outFolderDisplay.config(state='normal')
+        self.outFolderDisplay.config(state=NORMAL)
         if all(map(lambda x: bool(x), [self.folder.get(), self.new_folder.get(), self.name.get()])):
-            self.executeButton.config(state='normal')
+            self.executeButton.config(state=NORMAL)
 
     def onAppOption(self):
         if self.app_option.get() == self.options[1]:
             self.portable = False
             self.outFolderButton.config(state=DISABLED)
             self.outFolderDisplay.config(state=DISABLED)
+            if os.path.exists(self.folder.get()):
+                self.executeButton.config(state=NORMAL)
+            else:
+                self.executeButton.config(state=DISABLED)
         elif self.app_option.get() == self.options[0]:
             self.portable = True
-            self.outFolderButton.config(state='normal')
-
+            self.outFolderButton.config(state=NORMAL)
+            if all(map(os.path.exists, [self.folder.get(), self.new_folder.get()]) + [bool(self.name.get())]):
+                self.executeButton.config(state=NORMAL)
+                self.outFolderDisplay.config(state=NORMAL)
+            else:
+                self.executeButton.config(state=DISABLED)
 
     def onExecute(self):
         photo2map.photos_to_map(self.folder.get(), self.new_folder.get(), self.name.get(), self.portable)
