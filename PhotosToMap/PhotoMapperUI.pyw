@@ -13,7 +13,7 @@ from Tkinter import *
 from ttk import Progressbar
 from tkFileDialog import askdirectory, Open
 import tkMessageBox
-import photo2map
+import photomapper
 
 class GUI(Frame):
 
@@ -108,7 +108,7 @@ class GUI(Frame):
                 self.executeButton.config(state=DISABLED)
 
     def onExecute(self):
-        photo2map.photos_to_map(self.folder.get(), self.new_folder.get(), self.name.get(), self.portable)
+        photomapper.map_photos(self.folder.get(), self.new_folder.get(), self.name.get(), self.portable)
 
 def main():
     root = Tk()
