@@ -8,8 +8,31 @@ import shutil
 import glob
 import webbrowser
 import thread
+import ctypes
 
 __all__ = ['map_photos']
+
+def msg_box(text='hello world!', title='Message', style=0):
+    """display a message box
+
+    Required:
+        title -- title for message box
+        text -- display message
+
+    Optional:
+        style -- style of msg box
+
+      Styles:
+          0 : OK
+          1 : OK | Cancel
+          2 : Abort | Retry | Ignore
+          3 : Yes | No | Cancel
+          4 : Yes | No
+          5 : Retry | No
+          6 : Cancel | Try Again | Continue
+    """
+    return ctypes.windll.user32.MessageBoxA(0, text, title, style)
+
 
 def launch_page(html):
     """launches a web page, tries to find Google Chrome first, then defaults to
@@ -136,4 +159,7 @@ def map_photos(folder, out_location='', app_name='my_photos', portable=True):
         with open(oms_file, 'w') as f:
             f.write(oms)
 
-    thread.start_new_thread(launch_page, (html,))
+        thread.start_new_thread(launch_page, (html,))
+
+    else:
+        msg_box('Did not find any Geotagged Photos!', 'Warning')
