@@ -18,7 +18,7 @@ template = """<!DOCTYPE html>
             height: 100%
         }
     </style>
-    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?&sensor=false"></script>
+    <script src="https://maps.google.com/maps/api/js?v=3.9&amp;sensor=false"></script>
     <script type="text/javascript" src="bin/oms.min.js"></script>
 	<script src="bin/points.js"></script>
     <script type="text/javascript">
