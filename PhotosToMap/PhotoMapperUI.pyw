@@ -9,11 +9,59 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 import os
-from Tkinter import *
-from ttk import Progressbar
+try:
+    from Tkinter import *
+except:
+    from tkinter import *
+
 from tkFileDialog import askdirectory, Open
 import tkMessageBox
 import photomapper
+import thread
+import time
+
+class ProgressBar(object):
+    def __init__(self, title='Progress Bar'):
+        self.root = Tk()
+        self.title = title
+        self.isRunning = False
+
+    def start(self):
+        """ create the progress bar widget """
+        self.root.title(self.title)
+        self.root.geometry("+700+200")
+        canvas = Canvas(self.root, width=261, height=60, bg='lightgray')
+        canvas.pack()
+        rc2 = canvas.create_rectangle(15, 20, 243, 50, outline='blue', fill='lightblue')
+        rc1 = canvas.create_rectangle(24, 20, 34, 50, outline='white',  fill='green')
+        total=100
+        x = 5
+        self.isRunning = True
+
+        while self.isRunning:
+            # infinite loop, will continue until self.isRunning is set to False, Danger zone!
+            # I'm sure there are MUCH better ways to do this...
+
+            # move the small rectangle +5 or -5 units
+            total += x
+            if total > 311:
+                x = -5
+            elif total < 100:
+                x = 5
+                # in a separate process so should not interfere with mainloop()
+                time.sleep(0.2)
+                if isinstance(canvas, Canvas):
+                    canvas.move(rc1, x, 0)
+                    if canvas.coords(rc1)[0] >= 239:
+                        canvas.delete(rc1)
+                        rc1 = canvas.create_rectangle(24, 20, 34, 50, outline='white',  fill='green')
+                    canvas.update()
+    
+        self.root.destroy()
+
+    def stop(self):
+        """stops the progress bar"""
+        self.isRunning = False
 
 class GUI(Frame):
 
@@ -108,7 +156,10 @@ class GUI(Frame):
                 self.executeButton.config(state=DISABLED)
 
     def onExecute(self):
+        self.progressBar = ProgressBar('Creating Photo Viewer...')
+        thread.start_new_thread(self.progressBar.start, ())
         photomapper.map_photos(self.folder.get(), self.new_folder.get(), self.name.get(), self.portable)
+        self.progressBar.stop()
 
 def main():
     root = Tk()
